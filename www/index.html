@@ -17,23 +17,38 @@
       --accent: #38bdf8;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; background: var(--bg); color: var(--text); padding: 16px; padding-bottom: 40px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 16px; padding-bottom: 44px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .header h1 { font-size: 1.25rem; margin: 0; }
     .badges { display: flex; gap: 6px; }
     .badge { background: #334155; color: var(--accent); padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
     .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
-    .signal-box { text-align: center; padding: 18px; border-radius: 14px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); }
+    .signal-box { text-align: center; padding: 16px; border-radius: 14px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); }
     .signal-buy { background: rgba(16, 185, 129, 0.16); border-color: var(--green); }
     .signal-wait { background: rgba(245, 158, 11, 0.14); border-color: var(--yellow); }
-    .signal-title { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.5px; margin: 4px 0; }
+    .signal-title { font-size: 1.45rem; font-weight: 800; letter-spacing: 0.5px; margin: 4px 0; }
     .price-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
     .stat-box { background: rgba(15, 23, 42, 0.55); padding: 10px 6px; border-radius: 12px; }
     .stat-label { font-size: 0.72rem; color: var(--muted); }
-    .stat-val { font-size: 1.1rem; font-weight: 700; margin-top: 4px; }
+    .stat-val { font-size: 1.05rem; font-weight: 700; margin-top: 4px; }
+    .supplier-item { background: rgba(15, 23, 42, 0.6); border: 1px solid #334155; border-radius: 12px; padding: 12px; margin-top: 10px; }
+    .supplier-item.cheapest { border-color: var(--green); background: rgba(16, 185, 129, 0.08); }
+    .sup-top { display: flex; justify-content: space-between; align-items: center; }
+    .sup-name { font-weight: 700; font-size: 0.98rem; }
+    .sup-tag { font-size: 0.68rem; padding: 2px 7px; border-radius: 6px; margin-left: 6px; font-weight: 700; }
+    .tag-best { background: var(--green); color: #064e3b; }
+    .tag-est { background: #334155; color: #cbd5e1; }
+    .tag-real { background: var(--accent); color: #0f172a; }
+    .sup-price { font-size: 1.12rem; font-weight: 800; color: var(--text); }
+    .sup-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
+    .sup-sub { font-size: 0.78rem; color: var(--muted); }
+    .sup-actions { display: flex; gap: 6px; }
+    .mini-btn { padding: 5px 9px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: var(--text); font-size: 0.75rem; text-decoration: none; cursor: pointer; }
+    .mini-btn.primary { border-color: var(--accent); color: var(--accent); }
     label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; margin-top: 10px; }
     input, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
     .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--accent); color: #0f172a; font-weight: 700; font-size: 0.95rem; margin-top: 12px; cursor: pointer; }
+    .btn-ghost { background: transparent; border: 1px solid #475569; color: var(--muted); margin-top: 8px; }
     .muted-note { font-size: 0.75rem; color: var(--muted); margin-top: 8px; text-align: center; }
   </style>
 </head>
@@ -56,8 +71,8 @@
   <div class="card">
     <div class="price-row">
       <div class="stat-box">
-        <div class="stat-label">Päivän hinta</div>
-        <div class="stat-val" id="val-current" style="color: var(--accent);">-- €/l</div>
+        <div class="stat-label">Halvin nyt</div>
+        <div class="stat-val" id="val-current" style="color: var(--green);">-- €/l</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">30 pv keskiarvo</div>
@@ -65,23 +80,32 @@
       </div>
       <div class="stat-box">
         <div class="stat-label">90 pv alin</div>
-        <div class="stat-val" id="val-min90" style="color: var(--green);">-- €/l</div>
+        <div class="stat-val" id="val-min90">-- €/l</div>
       </div>
     </div>
   </div>
 
   <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 700;">Toimittajavertailu (<span id="list-postcode">78880</span>)</div>
+      <span style="font-size: 0.75rem; color: var(--muted);" id="list-liters-label">1 500 l</span>
+    </div>
+    <div id="suppliers-list"></div>
+    <button class="btn btn-ghost" onclick="resetCustomPrices()">Palauta arviohinnat (tyhjennä omat tarjoukset)</button>
+  </div>
+
+  <div class="card">
     <div style="font-weight: 600; margin-bottom: 8px;">Hintakehitys (90 pv)</div>
-    <canvas id="priceChart" height="170"></canvas>
+    <canvas id="priceChart" height="165"></canvas>
   </div>
 
   <div class="card">
     <div style="font-weight: 600; margin-bottom: 6px;">Oma säiliö & Säästölaskuri</div>
     <label>Tilausmäärä (litraa)</label>
-    <input type="number" id="order-liters" value="1500" step="100" oninput="recalcSavings()" />
+    <input type="number" id="order-liters" value="1500" step="100" oninput="renderAll()" />
     <div class="price-row" style="margin-top: 12px;">
       <div class="stat-box">
-        <div class="stat-label">Tilauksen hinta</div>
+        <div class="stat-label">Halvin tilaus</div>
         <div class="stat-val" id="calc-total">-- €</div>
       </div>
       <div class="stat-box">
@@ -110,27 +134,22 @@
 
 <script>
   // VAIHDA TÄHÄN OMAN GITHUB-REPOSITORIOSI OSOITE:
-  const GITHUB_RAW_URL = "https://raw.githubusercontent.com/Zeeser/hintatutka-app/main/prices.json";
+  const GITHUB_RAW_URL = "https://raw.githubusercontent.com/KAYTTAJANIMI/hintatutka-app/main/prices.json";
 
   let state = {
     postcode: localStorage.getItem("ht_postcode") || "78880",
     quality: localStorage.getItem("ht_quality") || "kesalaatu",
-    currentPrice: 1.89,
-    avg30: 1.94,
-    min90: 1.78,
-    brentTrend: 0.0,
-    history: []
+    customQuotes: JSON.parse(localStorage.getItem("ht_custom_quotes") || "{}"),
+    rawDb: null
   };
 
   let chartInstance = null;
 
-  function applyLocalAdjustments(basePrice, dbQuality) {
+  function adjustPrice(basePrice, dbQuality) {
     let price = basePrice;
-    // Jos tietokannassa on kesälaatu ja käyttäjä valitsi talvilaadun (tai päinvastoin)
     if (dbQuality === "kesalaatu" && state.quality === "talvilaatu") price += 0.07;
     if (dbQuality === "talvilaatu" && state.quality === "kesalaatu") price -= 0.07;
 
-    // Postinumeron rahtiero suhteessa 79600 (+0.02)
     const prefix = parseInt(state.postcode.substring(0, 2), 10);
     if (!isNaN(prefix)) {
       const userFreight = prefix < 40 ? 0.00 : (prefix >= 84 ? 0.05 : 0.02);
@@ -143,6 +162,7 @@
     document.getElementById("input-postcode").value = state.postcode;
     document.getElementById("input-quality").value = state.quality;
     document.getElementById("badge-postcode").textContent = state.postcode;
+    document.getElementById("list-postcode").textContent = state.postcode;
     document.getElementById("badge-quality").textContent = state.quality === "kesalaatu" ? "Kesälaatu" : "Talvilaatu";
 
     try {
@@ -150,88 +170,164 @@
       if (!res.ok) throw new Error("Ei yhteyttä");
       const data = await res.json();
       localStorage.setItem("ht_cached_db", JSON.stringify(data));
-      renderFromDB(data, "Live-data synkronoitu");
+      state.rawDb = data;
+      document.getElementById("sync-status").textContent = "Live-data synkronoitu";
     } catch (e) {
       const cached = localStorage.getItem("ht_cached_db");
       if (cached) {
-        renderFromDB(JSON.parse(cached), "Offline-tila (tallennettu data)");
+        state.rawDb = JSON.parse(cached);
+        document.getElementById("sync-status").textContent = "Offline-tila (tallennettu data)";
       } else {
-        // Fallback-esimerkkidata ensikäynnistykseen
-        const fallback = {
+        state.rawDb = {
           updated_at: new Date().toISOString(),
           quality: "kesalaatu",
-          current_price: 1.88,
-          avg_30d: 1.94,
-          min_90d: 1.76,
-          brent_trend_pct: -1.4,
+          current_price: 1.795,
+          avg_30d: 1.84,
+          min_90d: 1.72,
+          brent_trend_pct: -0.8,
           signal: "ODOTA",
-          reason: "Hinta laskussa, mutta vielä 0,12 €/l yli 90 pv pohjan.",
+          reason: "Syötä omat päivän tarjoushinnat alta tai kytke GitHub-automaatio.",
+          suppliers: [
+            { id: "seo", name: "SEO", price: 1.795, url: "https://www.seo.fi/polttooljy", is_estimate: true },
+            { id: "osuuskauppa", name: "Alueen Osuuskauppa / Paikallinen", price: 1.800, url: "https://www.s-kaupat.fi", is_estimate: true },
+            { id: "st1", name: "St1", price: 1.805, url: "https://www.st1.fi/lammitysoljy", is_estimate: true },
+            { id: "neste", name: "Neste", price: 1.815, url: "https://www.neste.fi/lammitysoljy", is_estimate: true }
+          ],
           history: [
-            { date: "2026-09-01", price: 1.98 },
-            { date: "2026-09-20", price: 1.95 },
-            { date: "2026-10-10", price: 1.92 },
-            { date: "2026-11-01", price: 1.90 },
-            { date: "2026-11-21", price: 1.88 }
+            { date: "2026-09-15", price: 1.89 },
+            { date: "2026-10-01", price: 1.86 },
+            { date: "2026-10-20", price: 1.83 },
+            { date: "2026-11-05", price: 1.81 },
+            { date: "2026-11-21", price: 1.795 }
           ]
         };
-        renderFromDB(fallback, "Esikatseludata (kytke GitHub URL)");
+        document.getElementById("sync-status").textContent = "Paikallinen tila";
       }
     }
+    renderAll();
   }
 
-  function renderFromDB(db, statusLabel) {
-    state.currentPrice = applyLocalAdjustments(db.current_price, db.quality);
-    state.avg30 = applyLocalAdjustments(db.avg_30d, db.quality);
-    state.min90 = applyLocalAdjustments(db.min_90d, db.quality);
-    state.brentTrend = db.brent_trend_pct || 0;
-    state.history = (db.history || []).map(h => ({
-      date: h.date.slice(5),
-      price: applyLocalAdjustments(h.price, db.quality)
-    }));
+  function renderAll() {
+    const db = state.rawDb;
+    if (!db) return;
 
-    document.getElementById("sync-status").textContent = statusLabel;
-    document.getElementById("val-current").textContent = state.currentPrice.toFixed(3) + " €/l";
-    document.getElementById("val-avg30").textContent = state.avg30.toFixed(3) + " €/l";
-    document.getElementById("val-min90").textContent = state.min90.toFixed(3) + " €/l";
+    const liters = parseFloat(document.getElementById("order-liters").value) || 1500;
+    document.getElementById("list-liters-label").textContent = liters.toLocaleString("fi-FI") + " l";
+
+    const rawSuppliers = db.suppliers || [
+      { id: "seo", name: "SEO", price: db.current_price, url: "https://www.seo.fi/polttooljy", is_estimate: true },
+      { id: "st1", name: "St1", price: db.current_price + 0.01, url: "https://www.st1.fi/lammitysoljy", is_estimate: true },
+      { id: "neste", name: "Neste", price: db.current_price + 0.02, url: "https://www.neste.fi/lammitysoljy", is_estimate: true }
+    ];
+
+    const computedSuppliers = rawSuppliers.map(s => {
+      const custom = state.customQuotes[s.id];
+      const finalPrice = custom !== undefined ? Number(custom) : adjustPrice(s.price, db.quality);
+      return {
+        ...s,
+        finalPrice,
+        isCustom: custom !== undefined
+      };
+    }).sort((a, b) => a.finalPrice - b.finalPrice);
+
+    const best = computedSuppliers[0];
+    const avg30 = adjustPrice(db.avg_30d, db.quality);
+    const min90 = adjustPrice(db.min_90d, db.quality);
+
+    document.getElementById("val-current").textContent = best.finalPrice.toFixed(3) + " €/l";
+    document.getElementById("val-avg30").textContent = avg30.toFixed(3) + " €/l";
+    document.getElementById("val-min90").textContent = min90.toFixed(3) + " €/l";
+
+    const listEl = document.getElementById("suppliers-list");
+    listEl.innerHTML = "";
+    computedSuppliers.forEach((s, idx) => {
+      const totalEur = Math.round(s.finalPrice * liters);
+      const diffEur = Math.round((s.finalPrice - best.finalPrice) * liters);
+      const isBest = idx === 0;
+
+      const div = document.createElement("div");
+      div.className = "supplier-item" + (isBest ? " cheapest" : "");
+      div.innerHTML = `
+        <div class="sup-top">
+          <div>
+            <span class="sup-name">${s.name}</span>
+            ${isBest ? '<span class="sup-tag tag-best">HALVIN</span>' : ''}
+            ${s.isCustom ? '<span class="sup-tag tag-real">OMA TARJOUS</span>' : '<span class="sup-tag tag-est">ARVIO</span>'}
+          </div>
+          <div class="sup-price">${s.finalPrice.toFixed(3)} €/l</div>
+        </div>
+        <div class="sup-bottom">
+          <div class="sup-sub">Yhteensä: <b>${totalEur} €</b> ${!isBest ? `(+${diffEur} €)` : ''}</div>
+          <div class="sup-actions">
+            <a class="mini-btn" href="${s.url}" target="_blank" rel="noopener">Tarkista</a>
+            <button class="mini-btn primary" onclick="editQuote('${s.id}', '${s.name}', ${s.finalPrice})">Syötä hinta</button>
+          </div>
+        </div>
+      `;
+      listEl.appendChild(div);
+    });
 
     const sigCard = document.getElementById("signal-card");
     const sigText = document.getElementById("signal-text");
-    sigText.textContent = db.signal || "ODOTA";
-    document.getElementById("signal-reason").textContent = db.reason || "";
+    const isBuy = best.finalPrice <= min90 || best.finalPrice <= 1.75;
+    sigText.textContent = isBuy ? "OSTA NYT" : (db.signal || "ODOTA");
+    document.getElementById("signal-reason").textContent =
+      `Edullisin: ${best.name} (${best.finalPrice.toFixed(3)} €/l) – ` +
+      (isBuy ? "hinta pohjatasolla!" : `ero 30 pv keskiarvoon ${(best.finalPrice - avg30).toFixed(3)} €/l.`);
 
-    sigCard.className = "signal-box " + (db.signal === "OSTA NYT" ? "signal-buy" : "signal-wait");
-    sigText.style.color = db.signal === "OSTA NYT" ? "var(--green)" : "var(--yellow)";
+    sigCard.className = "signal-box " + (isBuy ? "signal-buy" : "signal-wait");
+    sigText.style.color = isBuy ? "var(--green)" : "var(--yellow)";
 
-    document.getElementById("last-updated").textContent = "Päivitetty: " + new Date(db.updated_at).toLocaleString("fi-FI");
-    recalcSavings();
-    renderChart();
-  }
-
-  function recalcSavings() {
-    const liters = parseFloat(document.getElementById("order-liters").value) || 0;
-    const total = liters * state.currentPrice;
-    const diff = (state.avg30 - state.currentPrice) * liters;
-
+    const total = liters * best.finalPrice;
+    const diff = (avg30 - best.finalPrice) * liters;
     document.getElementById("calc-total").textContent = Math.round(total) + " €";
     const diffEl = document.getElementById("calc-diff");
     diffEl.textContent = (diff >= 0 ? "-" : "+") + Math.abs(Math.round(diff)) + " €";
     diffEl.style.color = diff >= 0 ? "var(--green)" : "var(--red)";
 
+    const brentTrend = db.brent_trend_pct || 0;
     const brentEl = document.getElementById("calc-brent");
-    brentEl.textContent = (state.brentTrend > 0 ? "+" : "") + state.brentTrend + " %";
-    brentEl.style.color = state.brentTrend > 0 ? "var(--red)" : "var(--green)";
+    brentEl.textContent = (brentTrend > 0 ? "+" : "") + brentTrend + " %";
+    brentEl.style.color = brentTrend > 0 ? "var(--red)" : "var(--green)";
+
+    document.getElementById("last-updated").textContent = "Päivitetty: " + new Date(db.updated_at).toLocaleString("fi-FI");
+
+    const hist = (db.history || []).map(h => ({
+      date: h.date.slice(5),
+      price: adjustPrice(h.price, db.quality)
+    }));
+    renderChart(hist);
   }
 
-  function renderChart() {
+  function editQuote(id, name, currentVal) {
+    const input = prompt(`Syötä toimittajan ${name} todellinen tarjoushinta (€/l) postinumerolle ${state.postcode}:`, currentVal.toFixed(3));
+    if (input === null) return;
+    const parsed = parseFloat(input.replace(",", "."));
+    if (!isNaN(parsed) && parsed > 0.5 && parsed < 5.0) {
+      state.customQuotes[id] = parsed;
+      localStorage.setItem("ht_custom_quotes", JSON.stringify(state.customQuotes));
+      renderAll();
+    } else {
+      alert("Virheellinen litrahinta. Syötä luku muodossa esim. 1.785");
+    }
+  }
+
+  function resetCustomPrices() {
+    state.customQuotes = {};
+    localStorage.removeItem("ht_custom_quotes");
+    renderAll();
+  }
+
+  function renderChart(hist) {
     const ctx = document.getElementById("priceChart").getContext("2d");
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx, {
       type: "line",
       data: {
-        labels: state.history.map(h => h.date),
+        labels: hist.map(h => h.date),
         datasets: [{
           label: "Litrahinta (€)",
-          data: state.history.map(h => h.price),
+          data: hist.map(h => h.price),
           borderColor: "#38bdf8",
           backgroundColor: "rgba(56, 189, 248, 0.15)",
           fill: true,
