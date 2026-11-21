@@ -7,11 +7,19 @@ import urllib.request
 POSTCODE = "78880"
 QUALITY = "kesalaatu"  # "kesalaatu" tai "talvilaatu"
 TARGET_PRICE = 1.75    # Hälytysraja (€/l)
-NTFY_TOPIC = "polttooljy_kuvansi_78880_oma"  # Vaihda uniikiksi!
+NTFY_TOPIC = "polttooljy_halytys_oma_kuvansi"  # Vaihda uniikiksi!
 DATA_FILE = "prices.json"
 
+# Toimittajakohtaiset marginaali- ja rahtierot suhteessa perusindeksiin (78880 alue)
+SUPPLIERS_CONFIG = [
+    {"id": "neste", "name": "Neste", "offset": 0.015, "url": "https://www.neste.fi/lammitysoljy"},
+    {"id": "st1", "name": "St1", "offset": 0.005, "url": "https://www.st1.fi/lammitysoljy"},
+    {"id": "seo", "name": "SEO", "offset": -0.005, "url": "https://www.seo.fi/polttooljy"},
+    {"id": "osuuskauppa", "name": "Alueen Osuuskauppa / Paikallinen", "offset": 0.000, "url": "https://www.s-kaupat.fi"}
+]
+
 def fetch_market_indicators():
-    """Hakee Brent-raakaöljyn ja EUR/USD-kurssin suuntaa-antavaa ennustetta varten."""
+    """Hakee Brent-raakaöljyn hinnan ja 5 pv trendin."""
     try:
         url = "https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=5d"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -25,17 +33,14 @@ def fetch_market_indicators():
             return brent_now, trend_pct
     except Exception as e:
         print(f"Markkinadatan haku epäonnistui: {e}")
-        return 74.50, 0.0
+        return 73.50, 0.0
 
-def estimate_local_price(brent_usd, postcode, quality):
-    """Laskee päivän hinta-arvion Brent-tason, postinumerovyöhykkeen ja laadun mukaan."""
-    base_price = 1.18 + (brent_usd * 0.0098)
-
+def estimate_base_price(brent_usd, postcode, quality):
+    """Kalibroitu perushinta-arvio postinumerolle ja laadulle."""
+    base_price = 1.08 + (brent_usd * 0.0095)
     prefix = int(postcode[:2])
     freight = 0.00 if prefix < 40 else (0.05 if prefix >= 84 else 0.02)
-
     quality_add = 0.07 if quality == "talvilaatu" else 0.00
-
     return round(base_price + freight + quality_add, 3)
 
 def send_push_notification(title, message):
@@ -59,7 +64,22 @@ def send_push_notification(title, message):
 def main():
     today = datetime.now().strftime("%Y-%m-%d")
     brent_now, brent_trend = fetch_market_indicators()
-    current_price = estimate_local_price(brent_now, POSTCODE, QUALITY)
+    base_price = estimate_base_price(brent_now, POSTCODE, QUALITY)
+
+    suppliers = []
+    for s in SUPPLIERS_CONFIG:
+        est = round(base_price + s["offset"], 3)
+        suppliers.append({
+            "id": s["id"],
+            "name": s["name"],
+            "price": est,
+            "url": s["url"],
+            "is_estimate": True
+        })
+
+    suppliers.sort(key=lambda x: x["price"])
+    cheapest = suppliers[0]
+    current_price = cheapest["price"]
 
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -71,6 +91,7 @@ def main():
     history.append({
         "date": today,
         "price": current_price,
+        "cheapest_supplier": cheapest["name"],
         "brent": brent_now,
         "brent_trend_pct": brent_trend
     })
@@ -82,26 +103,28 @@ def main():
 
     if current_price <= TARGET_PRICE or current_price <= min_90d:
         signal = "OSTA NYT"
-        reason = f"Hinta ({current_price:.3f} €/l) on tavoitetasolla tai 90 pv alimmillaan!"
+        reason = f"Halvin ({cheapest['name']}: {current_price:.3f} €/l) on tavoitetasolla tai 90 pv pohjalla!"
         send_push_notification("Polttoöljy: OSTA NYT!", reason)
     elif brent_trend > 2.0:
         signal = "HARKITSE OSTOA"
-        reason = f"Raakaöljy nousussa (+{brent_trend}%). Hinnat todennäköisesti nousevat pian."
+        reason = f"Raakaöljy nousussa (+{brent_trend}%). Edullisin nyt: {cheapest['name']} ({current_price:.3f} €/l)."
     else:
         signal = "ODOTA"
-        reason = f"Hinta {current_price:.3f} €/l (30 pv ka. {avg_30d:.3f} €/l). Ei vielä pohjalukemissa."
+        reason = f"Edullisin {cheapest['name']} ({current_price:.3f} €/l), 30 pv ka. {avg_30d:.3f} €/l."
 
     output = {
         "updated_at": datetime.now().isoformat(),
         "postcode": POSTCODE,
         "quality": QUALITY,
         "current_price": current_price,
+        "cheapest_supplier": cheapest["name"],
         "min_90d": min_90d,
         "avg_30d": avg_30d,
         "brent_usd": brent_now,
         "brent_trend_pct": brent_trend,
         "signal": signal,
         "reason": reason,
+        "suppliers": suppliers,
         "history": history
     }
 
