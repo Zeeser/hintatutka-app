@@ -98,7 +98,7 @@
   <div class="card">
     <div style="font-weight: 600; margin-bottom: 6px;">Paikalliset asetukset</div>
     <label>Postinumero</label>
-    <input type="text" id="input-postcode" value="79600" maxlength="5" />
+    <input type="text" id="input-postcode" value="78880" maxlength="5" />
     <label>Polttoöljyn laatu</label>
     <select id="input-quality">
       <option value="kesalaatu" selected>Kesälaatu (edullisempi)</option>
@@ -113,7 +113,7 @@
   const GITHUB_RAW_URL = "https://raw.githubusercontent.com/Zeeser/hintatutka-app/main/prices.json";
 
   let state = {
-    postcode: localStorage.getItem("ht_postcode") || "79600",
+    postcode: localStorage.getItem("ht_postcode") || "78880",
     quality: localStorage.getItem("ht_quality") || "kesalaatu",
     currentPrice: 1.89,
     avg30: 1.94,
@@ -250,7 +250,7 @@
   }
 
   function saveSettings() {
-    state.postcode = document.getElementById("input-postcode").value.trim() || "79600";
+    state.postcode = document.getElementById("input-postcode").value.trim() || "78880";
     state.quality = document.getElementById("input-quality").value;
     localStorage.setItem("ht_postcode", state.postcode);
     localStorage.setItem("ht_quality", state.quality);
