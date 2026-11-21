@@ -1,0 +1,20 @@
+{
+  "updated_at": "2026-11-21T08:20:53.897327",
+  "postcode": "78880",
+  "quality": "kesalaatu",
+  "current_price": 2.107,
+  "min_90d": 2.107,
+  "avg_30d": 2.107,
+  "brent_usd": 92.57,
+  "brent_trend_pct": 0.64,
+  "signal": "OSTA NYT",
+  "reason": "Hinta (2.107 €/l) on tavoitetasolla tai 90 pv alimmillaan!",
+  "history": [
+    {
+      "date": "2026-11-21",
+      "price": 2.107,
+      "brent": 92.57,
+      "brent_trend_pct": 0.64
+    }
+  ]
+}
