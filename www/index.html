@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Polttoöljyn Hintatutka</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 16px; padding-bottom: 40px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .header h1 { font-size: 1.25rem; margin: 0; }
+    .badges { display: flex; gap: 6px; }
+    .badge { background: #334155; color: var(--accent); padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+    .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+    .signal-box { text-align: center; padding: 18px; border-radius: 14px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.08); }
+    .signal-buy { background: rgba(16, 185, 129, 0.16); border-color: var(--green); }
+    .signal-wait { background: rgba(245, 158, 11, 0.14); border-color: var(--yellow); }
+    .signal-title { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.5px; margin: 4px 0; }
+    .price-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .stat-box { background: rgba(15, 23, 42, 0.55); padding: 10px 6px; border-radius: 12px; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); }
+    .stat-val { font-size: 1.1rem; font-weight: 700; margin-top: 4px; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; margin-top: 10px; }
+    input, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: var(--accent); color: #0f172a; font-weight: 700; font-size: 0.95rem; margin-top: 12px; cursor: pointer; }
+    .muted-note { font-size: 0.75rem; color: var(--muted); margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Hintatutka</h1>
+    <div class="badges">
+      <span class="badge" id="badge-postcode">78880</span>
+      <span class="badge" id="badge-quality">Kesälaatu</span>
+    </div>
+  </div>
+
+  <div class="signal-box signal-wait" id="signal-card">
+    <div class="stat-label" id="sync-status">Haetaan ajantasaista hintaa...</div>
+    <div class="signal-title" id="signal-text">LADATAAN</div>
+    <div style="font-size: 0.85rem; color: #cbd5e1;" id="signal-reason">Tarkistetaan markkinatilannetta</div>
+  </div>
+
+  <div class="card">
+    <div class="price-row">
+      <div class="stat-box">
+        <div class="stat-label">Päivän hinta</div>
+        <div class="stat-val" id="val-current" style="color: var(--accent);">-- €/l</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">30 pv keskiarvo</div>
+        <div class="stat-val" id="val-avg30">-- €/l</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">90 pv alin</div>
+        <div class="stat-val" id="val-min90" style="color: var(--green);">-- €/l</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 8px;">Hintakehitys (90 pv)</div>
+    <canvas id="priceChart" height="170"></canvas>
+  </div>
+
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 6px;">Oma säiliö & Säästölaskuri</div>
+    <label>Tilausmäärä (litraa)</label>
+    <input type="number" id="order-liters" value="1500" step="100" oninput="recalcSavings()" />
+    <div class="price-row" style="margin-top: 12px;">
+      <div class="stat-box">
+        <div class="stat-label">Tilauksen hinta</div>
+        <div class="stat-val" id="calc-total">-- €</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Ero 30 pv ka.</div>
+        <div class="stat-val" id="calc-diff">-- €</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Brent-trendi</div>
+        <div class="stat-val" id="calc-brent">-- %</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight: 600; margin-bottom: 6px;">Paikalliset asetukset</div>
+    <label>Postinumero</label>
+    <input type="text" id="input-postcode" value="79600" maxlength="5" />
+    <label>Polttoöljyn laatu</label>
+    <select id="input-quality">
+      <option value="kesalaatu" selected>Kesälaatu (edullisempi)</option>
+      <option value="talvilaatu">Talvilaatu (+0,07 €/l)</option>
+    </select>
+    <button class="btn" onclick="saveSettings()">Tallenna asetukset & Päivitä</button>
+    <div class="muted-note" id="last-updated">Päivitetty: -</div>
+  </div>
+
+<script>
+  // VAIHDA TÄHÄN OMAN GITHUB-REPOSITORIOSI OSOITE:
+  const GITHUB_RAW_URL = "https://raw.githubusercontent.com/Zeeser/hintatutka-app/main/prices.json";
+
+  let state = {
+    postcode: localStorage.getItem("ht_postcode") || "79600",
+    quality: localStorage.getItem("ht_quality") || "kesalaatu",
+    currentPrice: 1.89,
+    avg30: 1.94,
+    min90: 1.78,
+    brentTrend: 0.0,
+    history: []
+  };
+
+  let chartInstance = null;
+
+  function applyLocalAdjustments(basePrice, dbQuality) {
+    let price = basePrice;
+    // Jos tietokannassa on kesälaatu ja käyttäjä valitsi talvilaadun (tai päinvastoin)
+    if (dbQuality === "kesalaatu" && state.quality === "talvilaatu") price += 0.07;
+    if (dbQuality === "talvilaatu" && state.quality === "kesalaatu") price -= 0.07;
+
+    // Postinumeron rahtiero suhteessa 79600 (+0.02)
+    const prefix = parseInt(state.postcode.substring(0, 2), 10);
+    if (!isNaN(prefix)) {
+      const userFreight = prefix < 40 ? 0.00 : (prefix >= 84 ? 0.05 : 0.02);
+      price = price - 0.02 + userFreight;
+    }
+    return Number(price.toFixed(3));
+  }
+
+  async function syncData() {
+    document.getElementById("input-postcode").value = state.postcode;
+    document.getElementById("input-quality").value = state.quality;
+    document.getElementById("badge-postcode").textContent = state.postcode;
+    document.getElementById("badge-quality").textContent = state.quality === "kesalaatu" ? "Kesälaatu" : "Talvilaatu";
+
+    try {
+      const res = await fetch(GITHUB_RAW_URL + "?t=" + Date.now());
+      if (!res.ok) throw new Error("Ei yhteyttä");
+      const data = await res.json();
+      localStorage.setItem("ht_cached_db", JSON.stringify(data));
+      renderFromDB(data, "Live-data synkronoitu");
+    } catch (e) {
+      const cached = localStorage.getItem("ht_cached_db");
+      if (cached) {
+        renderFromDB(JSON.parse(cached), "Offline-tila (tallennettu data)");
+      } else {
+        // Fallback-esimerkkidata ensikäynnistykseen
+        const fallback = {
+          updated_at: new Date().toISOString(),
+          quality: "kesalaatu",
+          current_price: 1.88,
+          avg_30d: 1.94,
+          min_90d: 1.76,
+          brent_trend_pct: -1.4,
+          signal: "ODOTA",
+          reason: "Hinta laskussa, mutta vielä 0,12 €/l yli 90 pv pohjan.",
+          history: [
+            { date: "2026-09-01", price: 1.98 },
+            { date: "2026-09-20", price: 1.95 },
+            { date: "2026-10-10", price: 1.92 },
+            { date: "2026-11-01", price: 1.90 },
+            { date: "2026-11-21", price: 1.88 }
+          ]
+        };
+        renderFromDB(fallback, "Esikatseludata (kytke GitHub URL)");
+      }
+    }
+  }
+
+  function renderFromDB(db, statusLabel) {
+    state.currentPrice = applyLocalAdjustments(db.current_price, db.quality);
+    state.avg30 = applyLocalAdjustments(db.avg_30d, db.quality);
+    state.min90 = applyLocalAdjustments(db.min_90d, db.quality);
+    state.brentTrend = db.brent_trend_pct || 0;
+    state.history = (db.history || []).map(h => ({
+      date: h.date.slice(5),
+      price: applyLocalAdjustments(h.price, db.quality)
+    }));
+
+    document.getElementById("sync-status").textContent = statusLabel;
+    document.getElementById("val-current").textContent = state.currentPrice.toFixed(3) + " €/l";
+    document.getElementById("val-avg30").textContent = state.avg30.toFixed(3) + " €/l";
+    document.getElementById("val-min90").textContent = state.min90.toFixed(3) + " €/l";
+
+    const sigCard = document.getElementById("signal-card");
+    const sigText = document.getElementById("signal-text");
+    sigText.textContent = db.signal || "ODOTA";
+    document.getElementById("signal-reason").textContent = db.reason || "";
+
+    sigCard.className = "signal-box " + (db.signal === "OSTA NYT" ? "signal-buy" : "signal-wait");
+    sigText.style.color = db.signal === "OSTA NYT" ? "var(--green)" : "var(--yellow)";
+
+    document.getElementById("last-updated").textContent = "Päivitetty: " + new Date(db.updated_at).toLocaleString("fi-FI");
+    recalcSavings();
+    renderChart();
+  }
+
+  function recalcSavings() {
+    const liters = parseFloat(document.getElementById("order-liters").value) || 0;
+    const total = liters * state.currentPrice;
+    const diff = (state.avg30 - state.currentPrice) * liters;
+
+    document.getElementById("calc-total").textContent = Math.round(total) + " €";
+    const diffEl = document.getElementById("calc-diff");
+    diffEl.textContent = (diff >= 0 ? "-" : "+") + Math.abs(Math.round(diff)) + " €";
+    diffEl.style.color = diff >= 0 ? "var(--green)" : "var(--red)";
+
+    const brentEl = document.getElementById("calc-brent");
+    brentEl.textContent = (state.brentTrend > 0 ? "+" : "") + state.brentTrend + " %";
+    brentEl.style.color = state.brentTrend > 0 ? "var(--red)" : "var(--green)";
+  }
+
+  function renderChart() {
+    const ctx = document.getElementById("priceChart").getContext("2d");
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: state.history.map(h => h.date),
+        datasets: [{
+          label: "Litrahinta (€)",
+          data: state.history.map(h => h.price),
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(56, 189, 248, 0.15)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: "#94a3b8", maxTicksLimit: 6 }, grid: { display: false } },
+          y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } }
+        }
+      }
+    });
+  }
+
+  function saveSettings() {
+    state.postcode = document.getElementById("input-postcode").value.trim() || "79600";
+    state.quality = document.getElementById("input-quality").value;
+    localStorage.setItem("ht_postcode", state.postcode);
+    localStorage.setItem("ht_quality", state.quality);
+    syncData();
+  }
+
+  syncData();
+</script>
+</body>
+</html>
