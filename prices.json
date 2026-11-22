@@ -1,41 +1,41 @@
 {
-  "updated_at": "2026-11-21T11:21:57.653624",
+  "updated_at": "2026-11-22T14:49:09.547769",
   "postcode": "78880",
   "quality": "kesalaatu",
-  "current_price": 1.974,
+  "current_price": 1.95,
   "cheapest_supplier": "SEO",
-  "min_90d": 1.974,
-  "avg_30d": 1.974,
-  "brent_usd": 92.57,
-  "brent_trend_pct": 0.64,
+  "min_90d": 1.95,
+  "avg_30d": 1.962,
+  "brent_usd": 89.95,
+  "brent_trend_pct": -2.21,
   "signal": "OSTA NYT",
-  "reason": "Halvin (SEO: 1.974 €/l) on tavoitetasolla tai 90 pv pohjalla!",
+  "reason": "Halvin (SEO: 1.950 €/l) on tavoitetasolla tai 90 pv pohjalla!",
   "suppliers": [
     {
       "id": "seo",
       "name": "SEO",
-      "price": 1.974,
+      "price": 1.95,
       "url": "https://www.seo.fi/polttooljy",
       "is_estimate": true
     },
     {
       "id": "osuuskauppa",
       "name": "Alueen Osuuskauppa / Paikallinen",
-      "price": 1.979,
+      "price": 1.955,
       "url": "https://www.s-kaupat.fi",
       "is_estimate": true
     },
     {
       "id": "st1",
       "name": "St1",
-      "price": 1.984,
+      "price": 1.96,
       "url": "https://www.st1.fi/lammitysoljy",
       "is_estimate": true
     },
     {
       "id": "neste",
       "name": "Neste",
-      "price": 1.994,
+      "price": 1.97,
       "url": "https://www.neste.fi/lammitysoljy",
       "is_estimate": true
     }
@@ -47,6 +47,13 @@
       "cheapest_supplier": "SEO",
       "brent": 92.57,
       "brent_trend_pct": 0.64
+    },
+    {
+      "date": "2026-11-22",
+      "price": 1.95,
+      "cheapest_supplier": "SEO",
+      "brent": 89.95,
+      "brent_trend_pct": -2.21
     }
   ]
 }
