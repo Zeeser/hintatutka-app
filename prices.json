@@ -1,41 +1,41 @@
 {
-  "updated_at": "2026-11-24T18:10:10.344741",
+  "updated_at": "2026-11-25T17:32:45.235581",
   "postcode": "78880",
   "quality": "kesalaatu",
-  "current_price": 1.93,
+  "current_price": 1.951,
   "cheapest_supplier": "SEO",
   "min_90d": 1.926,
-  "avg_30d": 1.945,
-  "brent_usd": 87.85,
-  "brent_trend_pct": -1.7,
+  "avg_30d": 1.946,
+  "brent_usd": 90.14,
+  "brent_trend_pct": -1.38,
   "signal": "ODOTA",
-  "reason": "Edullisin SEO (1.930 €/l), 30 pv ka. 1.945 €/l.",
+  "reason": "Edullisin SEO (1.951 €/l), 30 pv ka. 1.946 €/l.",
   "suppliers": [
     {
       "id": "seo",
       "name": "SEO",
-      "price": 1.93,
+      "price": 1.951,
       "url": "https://www.seo.fi/polttooljy",
       "is_estimate": true
     },
     {
       "id": "osuuskauppa",
       "name": "Alueen Osuuskauppa / Paikallinen",
-      "price": 1.935,
+      "price": 1.956,
       "url": "https://www.s-kaupat.fi",
       "is_estimate": true
     },
     {
       "id": "st1",
       "name": "St1",
-      "price": 1.94,
+      "price": 1.961,
       "url": "https://www.st1.fi/lammitysoljy",
       "is_estimate": true
     },
     {
       "id": "neste",
       "name": "Neste",
-      "price": 1.95,
+      "price": 1.971,
       "url": "https://www.neste.fi/lammitysoljy",
       "is_estimate": true
     }
@@ -68,6 +68,13 @@
       "cheapest_supplier": "SEO",
       "brent": 87.85,
       "brent_trend_pct": -1.7
+    },
+    {
+      "date": "2026-11-25",
+      "price": 1.951,
+      "cheapest_supplier": "SEO",
+      "brent": 90.14,
+      "brent_trend_pct": -1.38
     }
   ]
 }
